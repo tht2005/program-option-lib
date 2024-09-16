@@ -2,36 +2,55 @@
 
 #include <stdio.h>
 
-struct dprol_command command[] = {
-  { "V", "version", 0, "display the version of Wget and exit", 0 },
-  { "h", "help", 0, "print this help", 0 },
-  { "b", "background", 0, "go to background after startup", 0 },
-  { "e", "execute", "COMMAND", "execute a `.wgetrc'-style command", 0 },
+void program_option_init(int argc, char *argv[]) {
 
-  { "o", "output-file", "FILE", "log messages to FILE", 1 },
-  { "a", "append-output", "FILE", "append messages to FILE", 1 },
-  { "d", "debug", 0, "print lots of debug information", 1 },
-  { "q", "quiet", 0, "quiet (no output)", 1 },
-  { "v", "verbose", 0, "be verbose (default)", 1 },
-  { "nv", "no-verbose", 0, "turn off verbose, without being quiet", 1 },
-  { DPROL_NO_KEY, "report-speed", "TYPE", "output bandwidth as TYPE, TYPE can be bits", 1 },
+struct dprol_option wget_option[] = {
+  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nStartup:" },
+  { "V", "version", 0, "display the version of Wget and exit" },
+  { "h", "help", 0, "print this help" },
+  { "b", "background", 0, "go to background after startup" },
+  { "e", "execute", "COMMAND", "execute a `.wgetrc'-style command" },
 
+  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nLogging and input file:" },
+  { "o", "output-file", "FILE", "log messages to FILE" },
+  { "a", "append-output", "FILE", "append messages to FILE" },
+  { "d", "debug", 0, "print lots of debug information" },
+  { "q", "quiet", 0, "quiet (no output)" },
+  { "v", "verbose", 0, "be verbose (default)" },
+  { "nv", "no-verbose", 0, "turn off verbose, without being quiet" },
+  { DPROL_NO_KEY, "report-speed", "TYPE", "output bandwidth as TYPE, TYPE can be bits" },
+
+  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nDownload:" },
   { "t", "tries", "NUMBER", "number of trials before failed", 2 },
   { DPROL_NO_KEY, "speed-limit", "NUMBER", "limit download spped", 2 },
 
   { DPROL_NULL_KEY }
 };
-char *group_description[] = {
-  "\nStartup:",
-  "\nLogging and input file:",
-  "\nDownloads:",
-  ""
+
+struct dprol_child wget_subcommand[] = {
+  { DPROL_GROUP_DESCRIPTION, "\nSecure things" },
+  { "rsa", "Encode data", 0, 0 },
+  { "genprime", "Generate a prime", 0, 0 },
+
+  { DPROL_GROUP_DESCRIPTION, "\nBigint operator" },
+  { "add", "Add two bigint", 0, 0 },
+  { "mul", "Multiply two bigint", 0, 0 },
+
+  { NULL }
 };
 
-struct dprol a = { "A program", command, 0, 0, group_description };
+struct dprol dprol_wget = {
+  "A program", wget_option,
+  wget_subcommand
+};
+
+
+  print_subcommand(&dprol_wget);
+  print_options(&dprol_wget);
+}
 
 int main(int argc, char *argv[]) {
-  print_options(&a);
+  program_option_init(argc, argv);
   return 0;
 }
 
