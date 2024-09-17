@@ -3,16 +3,26 @@
 #include <stdio.h>
 
 struct info_t {
-
+  int a, b, c;
 };
 
-int parseFunc(struct parse_data_t* parseInfo, void* info) {
-  return 0;
+void printHelp(struct dprol* dprol) {
+  printf("Help:\n"); 
+  dprol_print_subcommand(dprol);
 }
 
-void printHelp(struct dprol* dprol) {
-  printf("Help:\n");
-  dprol_print_subcommand(dprol);
+int parseFunc(int op, char *val, struct parse_data_t* parseInfo, void* infoPtr) {
+  switch(op) {
+    case 1:
+      dprol_print_version();
+      exit(0);
+    case 2:
+      printHelp(parseInfo->dprol);
+      exit(0);
+    default:
+      return DPROL_PARSE_ERROR;
+  }
+  return DPROL_PARSE_OK;
 }
 
 void program_option_init(int argc, char *argv[]) {
@@ -36,8 +46,8 @@ struct dprol_option wget_option[] = {
   { DPROL_NO_KEY, "report-speed", "TYPE", "output bandwidth as TYPE, TYPE can be bits" },
 
   { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nDownload:" },
-  { "t", "tries", "NUMBER", "number of trials before failed", 2 },
-  { DPROL_NO_KEY, "speed-limit", "NUMBER", "limit download spped", 2 },
+  { "t", "tries", "NUMBER", "number of trials before failed" },
+  { DPROL_NO_KEY, "speed-limit", "NUMBER", "limit download spped" },
 
   { DPROL_NULL_KEY }
 };
@@ -64,7 +74,9 @@ struct dprol dprol_wget = {
     printHelp(&dprol_wget);
     return;
   }
-  dprol_run_subcommand(argc, argv, &dprol_wget, "./subprogram_dir");
+  //dprol_run_subcommand(argc, argv, &dprol_wget, "./subprogram_dir");
+  struct info_t obj;
+  dprol_parse_opt(argc, argv, &dprol_wget, parseFunc, (void*)&obj);
 }
 
 int main(int argc, char *argv[]) {

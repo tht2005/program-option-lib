@@ -15,9 +15,11 @@ int dprol_tab_space = 4;
 int dprol_subcommand_tab = 4;
 int dprol_subcommand_space = 15;
 
-#define DPROL_UNKNOWN_ARG -1
-#define DPROL_SKIP_ARG 1
-#define DPROL_OK_ARG 0
+#define DPROL_UNKNOWN_ARG -500
+#define DPROL_SKIP_ARG -499
+
+#define DPROL_PARSE_OK -488
+#define DPROL_PARSE_ERROR -487
 
 #define DPROL_NULL_KEY "______________DPROL_NULL_KEY____________"
 #define DPROL_NO_KEY "_________DPROL_NO_KEY________"
@@ -25,7 +27,6 @@ int dprol_subcommand_space = 15;
 
 struct dprol_option {
   char *key, *long_key, *argument_description, *option_description;
-  int group;
 };
 size_t dprol_option_len(struct dprol_option* ptr) {
   struct dprol_option* end = ptr;
@@ -50,6 +51,15 @@ struct dprol {
   struct dprol_option *option;
   struct dprol_child* child;
 };
+
+void dprol_print_usage() {
+  if(dprol_usage) {
+    puts(dprol_usage);
+  }
+  else {
+    puts("Bugs: variable dprol_usage not defined!");
+  }
+}
 
 void dprol_print_version() {
   if(dprol_version) {
@@ -153,10 +163,66 @@ void dprol_run_subcommand(int argc, char *argv[], struct dprol* dprol, char* sub
 struct parse_data_t {
   int argc;
   int cur_arg;
-  char *argv[];
+  char **argv;
+  struct dprol* dprol;
 };
 
-void parseOpt(int argc, char *argv[], int (*parseFunc)(struct parse_data_t*, void*)) {
+size_t dprol_match_long_key(struct dprol* dprol, char* str) {
+  struct dprol_option* option = dprol->option;
+  size_t noption = dprol_option_len(option);
+  for(size_t i = 0; i < noption; ++i)
+    if(strcmp(option[i].long_key, str) == 0)
+      return i;
+  return DPROL_UNKNOWN_ARG;
+}
+size_t dprol_match_key(struct dprol* dprol, char* str) {
+  struct dprol_option* option = dprol->option;
+  size_t noption = dprol_option_len(option);
+  for(size_t i = 0; i < noption; ++i)
+    if(strcmp(option[i].key, str) == 0)
+      return i;
+  return DPROL_UNKNOWN_ARG;
+}
+
+int dprol_get_opt(struct dprol* dprol, char* arg) {
+  size_t arg_len = strlen(arg);
+  size_t pref_minus = 0;
+  while(pref_minus < arg_len && arg[pref_minus] == '-')
+    ++pref_minus;
+  if(pref_minus == 1)
+    return dprol_match_key(dprol, arg + 1);
+  if(pref_minus == 2)
+    return dprol_match_long_key(dprol, arg + 2);
+  return DPROL_UNKNOWN_ARG;
+}
+
+void dprol_unknown_option(char* opt) {
+  printf("Unknown option: \"%s\".\n", opt);
+  exit(1);
+}
+
+void dprol_parse_opt(int argc, char *argv[], struct dprol* dprol, int (*parseFunc)(int, char*, struct parse_data_t*, void*), void* infoPtr) {
+  struct parse_data_t parseData = { argc, 1, argv, dprol };
+  int *cur_arg = &parseData.cur_arg;
+  for(; *cur_arg < parseData.argc; ) {
+    size_t op = dprol_get_opt(dprol, parseData.argv[*cur_arg]);
+    if(op == DPROL_UNKNOWN_ARG)
+      dprol_unknown_option(parseData.argv[*cur_arg]);
+
+    ++(*cur_arg);
+
+    char* value = 0;
+    if(dprol->option[op].argument_description) {
+      if(*cur_arg >= parseData.argc) {
+        printf("Expected value after argument %s.\n", parseData.argv[*cur_arg - 1]);
+        exit(1);
+      }
+      value = parseData.argv[*cur_arg];
+      ++(*cur_arg);
+    }
+
+    parseFunc(op, value, &parseData, infoPtr);
+  }
 }
 
 #endif
