@@ -2,13 +2,20 @@
 
 #include <stdio.h>
 
+const int USAGE_NITEM = 4;
+
 struct info_t {
   int a, b, c;
 };
 
-void printHelp(struct dprol* dprol) {
-  printf("Help:\n"); 
-  dprol_print_subcommand(dprol);
+void printHelp(char* prog_name, struct dprol* dprol) {
+  dprol_print_usage(prog_name, dprol, USAGE_NITEM);
+  printf(dprol->description);
+  //dprol_print_subcommand(dprol);
+  dprol_print_options(dprol);
+  if(dprol_bug) {
+    printf("\n%s\n", dprol_bug);
+  }
 }
 
 int parseFunc(int op, char *val, struct parse_data_t* parseInfo, void* infoPtr) {
@@ -18,7 +25,7 @@ int parseFunc(int op, char *val, struct parse_data_t* parseInfo, void* infoPtr) 
       dprol_print_version();
       exit(0);
     case 2:
-      printHelp(parseInfo->dprol);
+      printHelp(parseInfo->argv[0], parseInfo->dprol);
       exit(0);
     default:
       return DPROL_PARSE_ERROR;
@@ -66,13 +73,13 @@ struct dprol_child wget_subcommand[] = {
 };
 
 struct dprol dprol_wget = {
-  "A program to fetch data from web servers.",
+  "\nA program to fetch data from web servers.\n",
   wget_option,
   wget_subcommand
 };
 
   if(argc == 1) {
-    printHelp(&dprol_wget);
+    printHelp(argv[0], &dprol_wget);
     return;
   }
   //dprol_run_subcommand(argc, argv, &dprol_wget, "./subprogram_dir");

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *dprol_usage=0, *dprol_bug=0, *dprol_version=0;
+char *dprol_bug=0, *dprol_version=0;
 
 int dprol_key_space = 7;
 int dprol_long_key_space = 28;
@@ -23,6 +23,7 @@ int dprol_subcommand_space = 15;
 
 #define DPROL_NULL_KEY "______________DPROL_NULL_KEY____________"
 #define DPROL_NO_KEY "_________DPROL_NO_KEY________"
+#define DPROL_NO_LONG_KEY "_________DPROL_NO_LONG_KEY________"
 #define DPROL_GROUP_DESCRIPTION "_________DPROL_GROUP_DES______________"
 
 struct dprol_option {
@@ -52,15 +53,6 @@ struct dprol {
   struct dprol_child* child;
 };
 
-void dprol_print_usage() {
-  if(dprol_usage) {
-    puts(dprol_usage);
-  }
-  else {
-    puts("Bugs: variable dprol_usage not defined!");
-  }
-}
-
 void dprol_print_version() {
   if(dprol_version) {
     puts(dprol_version);
@@ -81,9 +73,6 @@ void dprol_print_subcommand(struct dprol* dprol) {
 
     printf("%*s%-*s%s\n", dprol_subcommand_tab, "",
         dprol_subcommand_space - dprol_subcommand_tab, child[i].name, child[i].description);
-  }
-  if(dprol_bug) {
-    printf("\n%s\n", dprol_bug);
   }
 }
 
@@ -225,6 +214,76 @@ void dprol_parse_opt(int argc, char *argv[], struct dprol* dprol, int (*parseFun
       // code
     }
   }
+}
+
+void dprol_print_usage(char* prog_name, struct dprol* dprol, int itemEachLine) {
+  assert(itemEachLine > 0);
+  
+  static char prefix[1000];
+  sprintf(prefix, "Usage: %s", prog_name);
+  int prefix_len = strlen(prefix);
+  int cnt = 0;
+
+  struct dprol_child* child = dprol->child;
+  size_t nchild = dprol_child_len(child);
+
+  if(nchild > 0) {
+    static const char *str[] = { "<command>", "[<args>]" };
+    const size_t nstr = sizeof(str) / sizeof(*str);
+    for(size_t i = 0; i < nstr; ++i) {
+      if(cnt % itemEachLine == 0) {
+        if(cnt == 0)
+          printf(prefix);
+        else
+          printf("%*s", prefix_len, "");
+      }
+
+      printf(" %s", str[i]);
+
+      if(++cnt % itemEachLine == 0)
+        putchar('\n');
+    }
+  }
+
+  struct dprol_option* option = dprol->option;
+  size_t noption = dprol_option_len(option);
+
+  for(size_t i = 0; i < noption; ++i) {
+    if(strcmp(option[i].long_key, DPROL_GROUP_DESCRIPTION) == 0)
+      continue;
+
+    if(cnt % itemEachLine == 0) {
+      if(cnt == 0)
+        printf(prefix);
+      else
+        printf("%*s", prefix_len, "");
+    }
+
+    static char buf[1000];
+    int tmp;
+    char *ptr = buf;
+
+    if(strcmp(option[i].key, DPROL_NO_KEY) != 0) {
+      sprintf(ptr, "-%s%n", option[i].key, &tmp), ptr += tmp;
+      if(option[i].argument_description)
+        sprintf(ptr, "=%s%n", option[i].argument_description, &tmp), ptr += tmp;
+    }
+    if(strcmp(option[i].long_key, DPROL_NO_LONG_KEY) != 0) {
+      if(ptr != buf)
+        sprintf(ptr, " | %n", &tmp), ptr += tmp;
+      sprintf(ptr, "--%s%n", option[i].long_key, &tmp), ptr += tmp;
+      if(option[i].argument_description)
+        sprintf(ptr, "=%s%n", option[i].argument_description, &tmp), ptr += tmp;
+    }
+
+    printf(" [%s]", buf);
+
+    if(++cnt % itemEachLine == 0)
+      putchar('\n');
+  }
+  
+  if(cnt % itemEachLine)
+    putchar('\n');
 }
 
 #endif
