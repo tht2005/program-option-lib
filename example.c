@@ -2,7 +2,22 @@
 
 #include <stdio.h>
 
+struct info_t {
+
+};
+
+int parseFunc(struct parse_data_t* parseInfo, void* info) {
+  return 0;
+}
+
+void printHelp(struct dprol* dprol) {
+  printf("Help:\n");
+  dprol_print_subcommand(dprol);
+}
+
 void program_option_init(int argc, char *argv[]) {
+  dprol_version = "dprol 0.0.1";
+  dprol_bug = "If you find any bug please open a pull request on tht2005/program-option-lib\nor mail to dangduong31205@gmail.com";
 
 struct dprol_option wget_option[] = {
   { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nStartup:" },
@@ -40,13 +55,16 @@ struct dprol_child wget_subcommand[] = {
 };
 
 struct dprol dprol_wget = {
-  "A program", wget_option,
+  "A program to fetch data from web servers.",
+  wget_option,
   wget_subcommand
 };
 
-
-  print_subcommand(&dprol_wget);
-  print_options(&dprol_wget);
+  if(argc == 1) {
+    printHelp(&dprol_wget);
+    return;
+  }
+  dprol_run_subcommand(argc, argv, &dprol_wget, "./subprogram_dir");
 }
 
 int main(int argc, char *argv[]) {

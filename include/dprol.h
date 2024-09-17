@@ -1,10 +1,12 @@
 #ifndef __DPROL_H__
 #define __DPROL_H__
 
+#include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-char *dprol_usage=0, *dprol_bug=0, *version=0;
+char *dprol_usage=0, *dprol_bug=0, *dprol_version=0;
 
 int dprol_key_space = 7;
 int dprol_long_key_space = 28;
@@ -49,7 +51,16 @@ struct dprol {
   struct dprol_child* child;
 };
 
-void print_subcommand(struct dprol* dprol) {
+void dprol_print_version() {
+  if(dprol_version) {
+    puts(dprol_version);
+  }
+  else {
+    puts("Bugs: variable dprol_version not defined!");
+  }
+}
+
+void dprol_print_subcommand(struct dprol* dprol) {
   struct dprol_child *child = dprol->child;
   size_t nchild = dprol_child_len(child);
   for(size_t i = 0; i < nchild; ++i) {
@@ -61,9 +72,12 @@ void print_subcommand(struct dprol* dprol) {
     printf("%*s%-*s%s\n", dprol_subcommand_tab, "",
         dprol_subcommand_space - dprol_subcommand_tab, child[i].name, child[i].description);
   }
+  if(dprol_bug) {
+    printf("\n%s\n", dprol_bug);
+  }
 }
 
-void print_options(struct dprol* dprol) {
+void dprol_print_options(struct dprol* dprol) {
   struct dprol_option *option = dprol->option;
   size_t noption = dprol_option_len(option);
   for(size_t i = 0; i < noption; ++i) {
@@ -101,9 +115,48 @@ void print_options(struct dprol* dprol) {
   }
 }
 
-/*
-void parseOpt(int argc, char *argv[], int (*parseFunc)(char, void*)) {
+void dprol_user_error(int argc, char *argv[], char* msg) {
+  printf("%s Type \"%s --help\" for instructions.\n", msg, argv[0]);
+  exit(0);
 }
-*/
+
+void dprol_run_subcommand(int argc, char *argv[], struct dprol* dprol, char* subprogram_path) {
+  assert(argc > 1);
+  static char buf[1000];
+  struct dprol_child *child = dprol->child;
+  size_t nchild = dprol_child_len(child);
+  for(size_t i = 0; i < nchild; ++i) {
+    if(strcmp(child[i].name, DPROL_GROUP_DESCRIPTION) == 0) {
+      continue;
+    }
+    if(strcmp(argv[1], child[i].name) == 0) {
+      for(int i = 1, cur = 0, tmp; i < argc; ++i) {
+        if(i == 1 && subprogram_path) {
+          sprintf(buf + cur, "%s%n", subprogram_path, &tmp);
+          cur += tmp;
+          if(subprogram_path[strlen(subprogram_path) - 1] != '/') {
+            sprintf(buf + cur, "/");
+            ++cur;
+          }
+        }
+        sprintf(buf + cur, "%s %n", argv[i], &tmp);
+        cur += tmp;
+      }
+      system(buf);
+      return;
+    }
+  }
+  sprintf(buf, "Invalid command \"%s\".", argv[1]);
+  dprol_user_error(argc, argv, buf);
+}
+
+struct parse_data_t {
+  int argc;
+  int cur_arg;
+  char *argv[];
+};
+
+void parseOpt(int argc, char *argv[], int (*parseFunc)(struct parse_data_t*, void*)) {
+}
 
 #endif
