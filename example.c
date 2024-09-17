@@ -12,6 +12,7 @@ void printHelp(struct dprol* dprol) {
 }
 
 int parseFunc(int op, char *val, struct parse_data_t* parseInfo, void* infoPtr) {
+  struct info_t *data = (struct info_t *)infoPtr;
   switch(op) {
     case 1:
       dprol_print_version();

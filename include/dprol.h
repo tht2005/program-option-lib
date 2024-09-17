@@ -221,7 +221,9 @@ void dprol_parse_opt(int argc, char *argv[], struct dprol* dprol, int (*parseFun
       ++(*cur_arg);
     }
 
-    parseFunc(op, value, &parseData, infoPtr);
+    if(parseFunc(op, value, &parseData, infoPtr) == DPROL_PARSE_ERROR) {
+      // code
+    }
   }
 }
 
