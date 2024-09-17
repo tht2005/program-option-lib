@@ -1,4 +1,4 @@
-#include "./include/dprol.h"
+#include "dprol.h"
 
 #include <stdio.h>
 
