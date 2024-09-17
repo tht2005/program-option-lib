@@ -10,7 +10,7 @@ struct info_t {
 
 void printHelp(char* prog_name, struct dprol* dprol) {
   dprol_print_usage(prog_name, dprol, USAGE_NITEM);
-  printf("%s", dprol->description);
+  printf(dprol->description);
   //dprol_print_subcommand(dprol);
   dprol_print_options(dprol);
   if(dprol_bug) {
@@ -27,10 +27,6 @@ int parseFunc(int op, char *val, struct parse_data_t* parseInfo, void* infoPtr) 
     case 2:
       printHelp(parseInfo->argv[0], parseInfo->dprol);
       exit(0);
-    case 3:
-      break;
-    case DPROL_PARSE_COMMAND:
-      dprol_redirect_subcommand(parseInfo->argc, parseInfo->argv, parseInfo->dprol);
     default:
       return DPROL_PARSE_ERROR;
   }
@@ -42,36 +38,17 @@ void program_option_init(int argc, char *argv[]) {
   dprol_bug = "If you find any bug please open a pull request on tht2005/program-option-lib\nor mail to dangduong31205@gmail.com";
 
 struct dprol_option wget_option[] = {
-  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nStartup:" },
-  { "V", "version", 0, "display the version of Wget and exit" },
-  { "h", "help", 0, "print this help" },
-  { "b", "background", 0, "go to background after startup" },
-  { "e", "execute", "COMMAND", "execute a `.wgetrc'-style command" },
-
-  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nLogging and input file:" },
-  { "o", "output-file", "FILE", "log messages to FILE" },
-  { "a", "append-output", "FILE", "append messages to FILE" },
-  { "d", "debug", 0, "print lots of debug information" },
-  { "q", "quiet", 0, "quiet (no output)" },
-  { "v", "verbose", 0, "be verbose (default)" },
-  { "nv", "no-verbose", 0, "turn off verbose, without being quiet" },
-  { DPROL_NO_KEY, "report-speed", "TYPE", "output bandwidth as TYPE, TYPE can be bits" },
-
-  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nDownload:" },
-  { "t", "tries", "NUMBER", "number of trials before failed" },
-  { DPROL_NO_KEY, "speed-limit", "NUMBER", "limit download spped" },
-
   { DPROL_NULL_KEY }
 };
 
 struct dprol_child wget_subcommand[] = {
   { DPROL_GROUP_DESCRIPTION, "\nSecure things" },
-  { "rsa", "Encode data", "bin/rsa" },
-  { "genprime", "Generate a prime", "bin/genprime" },
+  { "rsa", "Encode data", 0, 0 },
+  { "genprime", "Generate a prime", 0, 0 },
 
   { DPROL_GROUP_DESCRIPTION, "\nBigint operator" },
-  { "add", "Add two bigint", "bin/add" },
-  { "mul", "Multiply two bigint", "bin/mul" },
+  { "add", "Add two bigint", 0, 0 },
+  { "mul", "Multiply two bigint", 0, 0 },
 
   { NULL }
 };
@@ -86,6 +63,7 @@ struct dprol dprol_wget = {
     printHelp(argv[0], &dprol_wget);
     return;
   }
+  //dprol_run_subcommand(argc, argv, &dprol_wget, "./subprogram_dir");
   struct info_t obj;
   dprol_parse_opt(argc, argv, &dprol_wget, parseFunc, (void*)&obj);
 }

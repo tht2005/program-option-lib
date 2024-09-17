@@ -15,11 +15,11 @@ int dprol_tab_space = 4;
 int dprol_subcommand_tab = 4;
 int dprol_subcommand_space = 15;
 
-#define DPROL_UNKNOWN_ARG -500
-#define DPROL_SKIP_ARG -499
+#define DPROL_PARSE_UNKNOWN_ARG -500
+#define DPROL_PARSE_OK -69
+#define DPROL_PARSE_ERROR -68
+#define DPROL_PARSE_COMMAND -67
 
-#define DPROL_PARSE_OK -488
-#define DPROL_PARSE_ERROR -487
 
 #define DPROL_NULL_KEY "______________DPROL_NULL_KEY____________"
 #define DPROL_NO_KEY "_________DPROL_NO_KEY________"
@@ -37,8 +37,7 @@ size_t dprol_option_len(struct dprol_option* ptr) {
 }
 
 struct dprol_child {
-  char *name, *description, *usage;
-  struct dprol_option *option;
+  char *name, *description, *bin_path;
 };
 size_t dprol_child_len(struct dprol_child* ptr) {
   struct dprol_child* end = ptr;
@@ -119,9 +118,19 @@ void dprol_user_error(int argc, char *argv[], char* msg) {
   exit(0);
 }
 
-void dprol_run_subcommand(int argc, char *argv[], struct dprol* dprol, char* subprogram_path) {
+void dprol_run_subcommand(int argc, char *argv[], struct dprol_child* child) {
+    static char buf[1000];
+    int cur = 0, tmp;
+    sprintf(buf + cur, "%s %n", child->bin_path, &tmp), cur += tmp;
+    for(int i = 2; i < argc; ++i) {
+      sprintf(buf + cur, "%s %n", argv[i], &tmp), cur += tmp;
+    }
+    system(buf);
+    exit(0);
+}
+
+void dprol_redirect_subcommand(int argc, char *argv[], struct dprol* dprol) {
   assert(argc > 1);
-  static char buf[1000];
   struct dprol_child *child = dprol->child;
   size_t nchild = dprol_child_len(child);
   for(size_t i = 0; i < nchild; ++i) {
@@ -129,22 +138,10 @@ void dprol_run_subcommand(int argc, char *argv[], struct dprol* dprol, char* sub
       continue;
     }
     if(strcmp(argv[1], child[i].name) == 0) {
-      for(int i = 1, cur = 0, tmp; i < argc; ++i) {
-        if(i == 1 && subprogram_path) {
-          sprintf(buf + cur, "%s%n", subprogram_path, &tmp);
-          cur += tmp;
-          if(subprogram_path[strlen(subprogram_path) - 1] != '/') {
-            sprintf(buf + cur, "/");
-            ++cur;
-          }
-        }
-        sprintf(buf + cur, "%s %n", argv[i], &tmp);
-        cur += tmp;
-      }
-      system(buf);
-      return;
+      dprol_run_subcommand(argc, argv, child + i);
     }
   }
+  static char buf[1000];
   sprintf(buf, "Invalid command \"%s\".", argv[1]);
   dprol_user_error(argc, argv, buf);
 }
@@ -162,7 +159,7 @@ size_t dprol_match_long_key(struct dprol* dprol, char* str) {
   for(size_t i = 0; i < noption; ++i)
     if(strcmp(option[i].long_key, str) == 0)
       return i;
-  return DPROL_UNKNOWN_ARG;
+  return DPROL_PARSE_UNKNOWN_ARG;
 }
 size_t dprol_match_key(struct dprol* dprol, char* str) {
   struct dprol_option* option = dprol->option;
@@ -170,7 +167,7 @@ size_t dprol_match_key(struct dprol* dprol, char* str) {
   for(size_t i = 0; i < noption; ++i)
     if(strcmp(option[i].key, str) == 0)
       return i;
-  return DPROL_UNKNOWN_ARG;
+  return DPROL_PARSE_UNKNOWN_ARG;
 }
 
 int dprol_get_opt(struct dprol* dprol, char* arg) {
@@ -178,15 +175,21 @@ int dprol_get_opt(struct dprol* dprol, char* arg) {
   size_t pref_minus = 0;
   while(pref_minus < arg_len && arg[pref_minus] == '-')
     ++pref_minus;
+  if(pref_minus == 0)
+    return DPROL_PARSE_COMMAND;
   if(pref_minus == 1)
     return dprol_match_key(dprol, arg + 1);
   if(pref_minus == 2)
     return dprol_match_long_key(dprol, arg + 2);
-  return DPROL_UNKNOWN_ARG;
+  return DPROL_PARSE_UNKNOWN_ARG;
 }
 
 void dprol_unknown_option(char* opt) {
   printf("Unknown option: \"%s\".\n", opt);
+  exit(1);
+}
+void dprol_parse_error(char* opt) {
+  printf("Invalid argument for option %s.\n", opt);
   exit(1);
 }
 
@@ -194,25 +197,25 @@ void dprol_parse_opt(int argc, char *argv[], struct dprol* dprol, int (*parseFun
   struct parse_data_t parseData = { argc, 1, argv, dprol };
   int *cur_arg = &parseData.cur_arg;
   for(; *cur_arg < parseData.argc; ) {
-    size_t op = dprol_get_opt(dprol, parseData.argv[*cur_arg]);
-    if(op == DPROL_UNKNOWN_ARG)
+    int op = dprol_get_opt(dprol, parseData.argv[*cur_arg]);
+    if(op == DPROL_PARSE_UNKNOWN_ARG)
       dprol_unknown_option(parseData.argv[*cur_arg]);
+
+    static char optionStr[1000];
+    memcpy(optionStr, argv[*cur_arg], strlen(argv[*cur_arg]) * sizeof(char));
 
     ++(*cur_arg);
 
     char* value = 0;
-    if(dprol->option[op].argument_description) {
-      if(*cur_arg >= parseData.argc) {
-        printf("Expected value after argument %s.\n", parseData.argv[*cur_arg - 1]);
-        exit(1);
-      }
-      value = parseData.argv[*cur_arg];
-      ++(*cur_arg);
+    if(op != DPROL_PARSE_COMMAND && dprol->option[op].argument_description) {
+      if(*cur_arg >= parseData.argc)
+        dprol_parse_error(optionStr);
+      value = parseData.argv[ (*cur_arg)++ ];
     }
 
-    if(parseFunc(op, value, &parseData, infoPtr) == DPROL_PARSE_ERROR) {
-      // code
-    }
+    int ret = parseFunc(op, value, &parseData, infoPtr);
+    if(ret == DPROL_PARSE_ERROR)
+      dprol_parse_error(optionStr);
   }
 }
 
@@ -233,7 +236,7 @@ void dprol_print_usage(char* prog_name, struct dprol* dprol, int itemEachLine) {
     for(size_t i = 0; i < nstr; ++i) {
       if(cnt % itemEachLine == 0) {
         if(cnt == 0)
-          printf(prefix);
+          printf("%s", prefix);
         else
           printf("%*s", prefix_len, "");
       }
@@ -254,7 +257,7 @@ void dprol_print_usage(char* prog_name, struct dprol* dprol, int itemEachLine) {
 
     if(cnt % itemEachLine == 0) {
       if(cnt == 0)
-        printf(prefix);
+        printf("%s", prefix);
       else
         printf("%*s", prefix_len, "");
     }
