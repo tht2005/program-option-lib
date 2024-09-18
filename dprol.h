@@ -219,11 +219,20 @@ void dprol_parse_opt(int argc, char *argv[], struct dprol* dprol, int (*parseFun
   }
 }
 
+char *dprol_program_name_format(char* name) {
+  char *ptr = name + strlen(name);
+  while(ptr != name && *ptr != '/')
+    --ptr;
+  if(*ptr == '/')
+    ++ptr;
+  return ptr;
+}
+
 void dprol_print_usage(char* prog_name, struct dprol* dprol, int itemEachLine) {
   assert(itemEachLine > 0);
-  
+
   static char prefix[1000];
-  sprintf(prefix, "Usage: %s", prog_name);
+  sprintf(prefix, "Usage: %s", dprol_program_name_format(prog_name));
   int prefix_len = strlen(prefix);
   int cnt = 0;
 
