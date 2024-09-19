@@ -88,14 +88,20 @@ void dprol_print_options(struct dprol* dprol) {
       printf("%*s", dprol_key_space, "");
     else {
       static char key_buf[100];
-      sprintf(key_buf, "-%s,", option[i].key);
+      sprintf(key_buf, "-%s", option[i].key);
       int key_len = strlen(key_buf);
+      if(strcmp(option[i].long_key, DPROL_NO_LONG_KEY) != 0) {
+        key_buf[key_len++] = ',';
+        key_buf[key_len] = 0;
+      }
       int left_space = (dprol_key_space - key_len) >> 1;
       int right_space = dprol_key_space - key_len - left_space;
       printf("%*s%s%*s", left_space, "", key_buf, right_space, "");
     }
 
-    {
+    if(strcmp(option[i].long_key, DPROL_NO_LONG_KEY) == 0)
+      printf("%*s", dprol_long_key_space, "");
+    else {
       static char long_key_buf[100];
       int len;
 

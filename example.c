@@ -61,6 +61,10 @@ struct dprol_option wget_option[] = {
   { "t", "tries", "=<number>", "number of trials before failed" },
   { DPROL_NO_KEY, "speed-limit", "=<number>", "limit download spped" },
 
+  { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nTest:" },
+  { DPROL_NO_KEY, "tries", "=<number>", "number of trials before failed" },
+  { "tt", DPROL_NO_LONG_KEY, "=<number>", "number of trials before failed" },
+
   { DPROL_NULL_KEY }
 };
 
