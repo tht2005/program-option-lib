@@ -101,7 +101,7 @@ void dprol_print_options(struct dprol* dprol) {
 
       sprintf(long_key_buf, "--%s%n", option[i].long_key, &len);
       if(option[i].argument_description)
-        sprintf(long_key_buf + len, "=%s%n", option[i].argument_description, &len);
+        sprintf(long_key_buf + len, "%s%n", option[i].argument_description, &len);
 
       if(len < dprol_long_key_space)
         printf("%-*s", dprol_long_key_space, long_key_buf);
@@ -278,14 +278,14 @@ void dprol_print_usage(char* prog_name, struct dprol* dprol, int itemEachLine) {
     if(strcmp(option[i].key, DPROL_NO_KEY) != 0) {
       sprintf(ptr, "-%s%n", option[i].key, &tmp), ptr += tmp;
       if(option[i].argument_description)
-        sprintf(ptr, "=%s%n", option[i].argument_description, &tmp), ptr += tmp;
+        sprintf(ptr, "%s%n", option[i].argument_description, &tmp), ptr += tmp;
     }
     if(strcmp(option[i].long_key, DPROL_NO_LONG_KEY) != 0) {
       if(ptr != buf)
         sprintf(ptr, " | %n", &tmp), ptr += tmp;
       sprintf(ptr, "--%s%n", option[i].long_key, &tmp), ptr += tmp;
       if(option[i].argument_description)
-        sprintf(ptr, "=%s%n", option[i].argument_description, &tmp), ptr += tmp;
+        sprintf(ptr, "%s%n", option[i].argument_description, &tmp), ptr += tmp;
     }
 
     printf(" [%s]", buf);

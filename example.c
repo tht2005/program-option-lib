@@ -46,20 +46,20 @@ struct dprol_option wget_option[] = {
   { "V", "version", 0, "display the version of Wget and exit" },
   { "h", "help", 0, "print this help" },
   { "b", "background", 0, "go to background after startup" },
-  { "e", "execute", "COMMAND", "execute a `.wgetrc'-style command" },
+  { "e", "execute", " <command>", "execute a `.wgetrc'-style command" },
 
   { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nLogging and input file:" },
-  { "o", "output-file", "FILE", "log messages to FILE" },
-  { "a", "append-output", "FILE", "append messages to FILE" },
+  { "o", "output-file", "=<file>", "log messages to FILE" },
+  { "a", "append-output", "=<file>", "append messages to FILE" },
   { "d", "debug", 0, "print lots of debug information" },
   { "q", "quiet", 0, "quiet (no output)" },
   { "v", "verbose", 0, "be verbose (default)" },
   { "nv", "no-verbose", 0, "turn off verbose, without being quiet" },
-  { DPROL_NO_KEY, "report-speed", "TYPE", "output bandwidth as TYPE, TYPE can be bits" },
+  { DPROL_NO_KEY, "report-speed", "=<type>", "output bandwidth as TYPE, TYPE can be bits" },
 
   { DPROL_NO_KEY, DPROL_GROUP_DESCRIPTION, 0, "\nDownload:" },
-  { "t", "tries", "NUMBER", "number of trials before failed" },
-  { DPROL_NO_KEY, "speed-limit", "NUMBER", "limit download spped" },
+  { "t", "tries", "=<number>", "number of trials before failed" },
+  { DPROL_NO_KEY, "speed-limit", "=<number>", "limit download spped" },
 
   { DPROL_NULL_KEY }
 };
